@@ -1,0 +1,43 @@
+name: Android Build (Buildozer)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install system deps
+        run: |
+          sudo apt update
+          sudo apt install -y openjdk-11-jdk python3-pip python3-setuptools python3-wheel git zip unzip
+          sudo apt install -y build-essential autoconf libtool pkg-config zlib1g-dev
+          sudo apt install -y libncurses5 libstdc++6
+          pip3 install --user --upgrade cython virtualenv
+
+      - name: Install buildozer & deps
+        run: |
+          python3 -m pip install --user buildozer==1.4.6
+          python3 -m pip install --user Cython==0.29.33
+          export PATH=$PATH:~/.local/bin
+
+      - name: Build APK
+        env:
+          ANDROIDSDK: /usr/lib/android-sdk
+        run: |
+          export PATH=$PATH:~/.local/bin
+          buildozer -v android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-apk
+          path: bin/*.apk
